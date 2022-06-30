@@ -1,7 +1,7 @@
 import { separateArray } from '../helpers/'
 
 export const dbHasData = async ({target}) => {
-    return localStorage.getItem(target)
+    return localStorage.getItem(target) !== null
 }
 
 export const getData = async ({target}) => {
