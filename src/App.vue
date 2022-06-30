@@ -12,7 +12,7 @@
     <q-scroll-area  :style="areaHeight">
         <router-view v-slot="{ Component }">
           <transition :name="transitionName">
-            <div class="component-wrapper" :class="{desktop: !isMobile}" :style="componentWrapperStyle" :key="$route.path">
+            <div class="component-wrapper" :class="{desktop: !isMobile, 'hide-nav': hideNavBar}" :style="componentWrapperStyle" :key="$route.path">
               <component :is="Component"/>
             </div>
           </transition>
@@ -78,32 +78,19 @@ export default {
  
 
   methods: {
-    async defineUserStatus(){
-      const isUserLogined = await dbHasData({target: 'user'})
-      this.showUserRouteByDefinedStatus(isUserLogined)
-    },
-
-    async showUserRouteByDefinedStatus(status){
-      if(status){
-        this.getUserInfo()
+    async showUserRouteByDefinedStatus(){
+      await this.$store.commit('check_user_status')
+      if(this.$store.state.isRegistered){
+        await this.$store.commit('get_user_data')
         this.$router.push('/main')
-      } else {
-        this.$router.push('/')
+        return
       }
-    },
-
-    async getUserInfo(){
-      this.$store.state.user = await getData({target: 'user'})
-      this.$store.state.expense = await getData({target: 'expense'})
-      this.$store.state.sales = await getData({target: 'sales'})
-      this.$store.state.income = await getData({target: 'income'})
-      this.$store.state.archive = await getData({target: 'archive'})
-      this.$store.state.isRegistered = true
+      this.$router.push('/')
     }
   },
 
   beforeMount(){
-    this.defineUserStatus()
+    this.showUserRouteByDefinedStatus()
   }
 }
 
@@ -155,6 +142,9 @@ select {
   &.desktop {
     width: calc(100% - 10%);
     margin-left: auto;
+    &.hide-nav {
+      width: 100%;
+    }
   }
 }
 

@@ -1,16 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Start from '../views/Start.vue'
-import Main from '../views/Main.vue'
-import Record from '../views/Record.vue'
-import UserData from '../views/UserData.vue'
-import Calculations from '../views/Сalculations.vue'
-import Archive from '../views/Archive.vue'
+import StartView from '../views/StartView.vue'
+import RegisterView from '../views/RegisterView.vue'
+import MainView from '../views/MainView.vue'
+import RecordView from '../views/RecordView.vue'
+import UserDataView from '../views/UserDataView.vue'
+import CalculationsView from '../views/СalculationsView.vue'
+import ArchiveView from '../views/ArchiveView.vue'
 
 const routes = [
     {
         path: '/',
-        component: Start,
+        component: StartView,
         meta: {
             index: 0,
             noNav: true,
@@ -18,7 +19,7 @@ const routes = [
     },
     {
         path: '/register',
-        component: UserData,
+        component: RegisterView,
         meta: {
             index: 1,
             noNav: true,
@@ -26,14 +27,14 @@ const routes = [
     },
     {
         path: '/main',
-        component: Main,
+        component: MainView ,
         meta: {
             index: 2
         }
     },
     {
         path: '/user-data',
-        component: UserData,
+        component: UserDataView,
         meta: {
             index: 3
         }
@@ -41,21 +42,21 @@ const routes = [
     },
     {
         path: '/calculations',
-        component: Calculations,
+        component: CalculationsView,
         meta: {
             index: 4
         }
     },
     {
         path: '/record/:period',
-        component: Record,
+        component: RecordView,
         meta: {
             index: 5
         }
     },
     {
         path: '/arhive',
-        component: Archive,
+        component: ArchiveView,
         meta: {
             index: 6
         }
