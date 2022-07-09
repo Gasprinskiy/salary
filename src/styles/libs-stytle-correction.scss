@@ -1,0 +1,58 @@
+.q-scrollarea__thumb  {
+    background-color: $elements !important;
+    width: 5px !important;
+}
+.q-scrollarea__bar {
+    opacity: 0 !important;
+}
+
+.q-scrollarea {
+    position: relative !important;
+}
+
+.q-table__card {
+    color: $text-color !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
+    outline: 1px solid $elements;
+    background-color: inherit  !important;
+    overflow: hidden !important;
+}
+
+.bg-warning {
+    background-color: $warn !important;
+}
+
+.q-notification {
+    background-color: $elements !important;
+}
+
+.n-scrollbar-content {
+    padding-top: 30px !important;
+}
+
+.n-notification-main__content {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.n-notification-main-footer {
+    margin-top: 5px !important;
+    .n-notification-main-footer__meta {
+      font-size: 14px !important;
+      font-weight: 500;  
+    }
+}
+
+.n-notification__avatar {
+    position: unset !important;
+}
+
+.n-notification {
+    align-items: center;
+    max-width: 280px !important;
+}
+
+.n-notification-main {
+    margin-left: 20px !important;
+}
