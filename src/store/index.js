@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import { saveData, getData, dbHasData } from '../services/dbRequests/'
+import { saveData, getData, dbHasData, testPut, getDataByDb } from '../services/dbRequests/'
 
 export default createStore({
     state () {
@@ -20,10 +20,11 @@ export default createStore({
 
       async sync_user_data (state, userData) {
         state.user = userData;
-        await saveData({
+        await testPut({
           target: 'user',
           payload: userData
         })
+        console.log(getDataByDb({target: 'user'}));
       },
 
       async sync_new_values(state, {value, placement, assign = false}){
