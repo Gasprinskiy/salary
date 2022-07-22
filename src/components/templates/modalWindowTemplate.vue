@@ -1,6 +1,6 @@
 <template>
-    <div class="modal-window-wrapper" @click="closeBlur" @keyup="closeModal" :class="{show: show}">  
-        <div class="modal-window-container" @keyup="closeModal" @click.stop :style="{maxWidth: maxWidth + 'px'}">
+    <div class="modal-window-wrapper" @click="closeBlur"  :class="{show: show}">  
+        <div class="modal-window-container" @click.stop  :style="{maxWidth: maxWidth + 'px'}">
             <app-button 
                 v-if="xbtn" 
                 @click="closeModal" 

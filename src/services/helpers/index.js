@@ -43,10 +43,23 @@ export const isArraysEqual = (a1, a2) => {
     .concat(a2.filter(i=>!a1.includes(i)))
 }
 
+export const makeUniq = (array) => {
+    const uniqSet = new Set(array);
+    return [...uniqSet];
+}
+
+export const makeItemTitle = (itemName, itemNumber) => {
+    if(itemNumber > 1){
+        return `${itemName}[${itemNumber}]`
+    }
+    return itemName
+}
+
 const getGreetIndex = (hour) => {
     if(hour >= 6 && hour <= 11){ return 0 } 
     else if(hour > 11 && hour <= 16){ return 1} 
     else if(hour > 16 && hour <= 22){ return 2} 
     else if(hour > 22 || hour < 6){ return 3 } 
 }
+
 

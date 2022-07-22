@@ -27,11 +27,11 @@
     <div class="archive-items">
       <div 
       class="archive-item"
-      v-for="item in separatedArchive" 
+      v-for="(item, index) in archive" 
       :key="item.no"
       >
         <archive-item
-          :title="`${item.name} [${item.no}]`"
+          :title="archiveItemName[index]"
         >
           <template v-slot:item-slot>
               <div class="archive-item-buttons">
@@ -51,11 +51,11 @@
         </archive-item>
       </div>
       <div class="archive-items-bottom">
-        <app-button
+        <!-- <app-button
           v-if="archiveHasMoreData"
           label="Показать еще"
-          @click="getMore()"
-        />
+          @click="getMore"
+        /> -->
       </div>
     </div>
     <n-empty
@@ -111,8 +111,8 @@ import { NEmpty, NIcon } from 'naive-ui'
 
 
 import { core } from '../core'
-import { separateArray } from '../services/helpers'
-import { saveData } from '../services/dbRequests'
+import { makeItemTitle } from '../services/helpers'
+import { getData } from '../services/dbRequests'
 import { useNotification } from 'naive-ui'
 import { SaveOutline, AnalyticsOutline, InformationCircleOutline } from '@vicons/ionicons5'
 
@@ -141,21 +141,27 @@ export default {
 
   data() {
     return {
-      separatedArchive: [],
+      archive: [],
       deletedItems: [],
-      limit: 10,
-      offsetPage: 1,
       showAnalitycisModal: false, 
     }
   },
 
   computed: {
-    archiveHasMoreData(){
-      return (this.separatedArchive.length + this.deletedItems.length) < this.$store.state.archive.length
+    // archiveHasMoreData(){
+    //   return (this.separatedArchive.length + this.deletedItems.length) < this.$store.state.archive.length
+    // },
+
+    archiveItemName(){
+      const result = []
+      this.archive.forEach(item => {
+        result.push(makeItemTitle(item.name, item.no))
+      })
+      return result
     },
 
     archiveEmpty(){
-      return this.separatedArchive.length <= 0
+      return this.archive.length <= 0
     },
 
     hasTrash(){
@@ -163,43 +169,31 @@ export default {
     },
 
     analyticsWarn(){
-      return this.$store.state.archive.length <= 2
+      return this.archive.length <= 2
     },
 
     avarageSales(){
       return core.calcAverageValue({
-        valuesArray: this.$store.state.archive,
+        valuesArray: this.archive,
         value: 'totalSales' 
       })
     },
 
     avarageSalary(){
       return core.calcAverageValue({
-        valuesArray: this.$store.state.archive,
+        valuesArray: this.archive,
         value: 'totalSalary' 
       })
     },
   },
 
   methods: {
-    getSeparatedArchive(){
-      this.separatedArchive = separateArray({
-        sourceArray: this.$store.state.archive,
-        reverse: true,
-        options: {
-          limit: this.limit,
-          page: this.offsetPage
-        }
-      })
-    },
-
-    getMore(){
-      this.offsetPage += 1
-      this.getSeparatedArchive()
+    async getSeparatedArchive(){
+      this.archive = await getData({target: 'archive'})
     },
 
     removeItem(item){
-      this.separatedArchive = this.separatedArchive.filter(data => data !== item)
+      this.archive = this.archive.filter(data => data !== item)
       this.deletedItems.push(item)
       this.notif.success({
         content: 'Данные в корзине',
@@ -211,11 +205,10 @@ export default {
     async removeDeletedItemsFromSourceArchive(){
       if(this.deletedItems.length > 0){
         this.deletedItems.forEach(item => {
-          const filteredArchive = this.$store.state.archive.filter(data => data !== item)
           this.$store.commit('sync_new_values',{
-            value: filteredArchive,
+            value: item,
             placement: 'archive', 
-            assign: true
+            remove: true
           })
         })
         this.deletedItems = []

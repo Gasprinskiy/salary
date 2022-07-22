@@ -2,7 +2,6 @@
 <div 
     :class="computedClass" 
     v-chind-focused="changeFocus"
-    @keyup.enter="unfocusChild"
     ref="app-input"
 >
     <div 
@@ -18,7 +17,7 @@
     >
         {{label}}
     </div>
-    <div class="app-input-wrapper">
+    <div class="app-input-wrapper" >
         <slot name="input"/>
     </div>
     <modal-window-template
@@ -31,7 +30,6 @@
                 class="app-input"
                 :class="computedClass" 
                 v-chind-focused="changeFocus"
-                ref="modalinput"
             >
                 <div 
                     class="app-input-icon" 
@@ -47,7 +45,7 @@
                     {{label}}
                 </div>
                 <div class="app-input-wrapper" >
-                    <slot  name="input"/>
+                    <slot name="input"/>
                 </div>
             </div> 
         </template>
@@ -76,13 +74,6 @@ export default {
         }
     },
 
-    watch: {
-        mobileFouced(val){
-            if(val){
-                this.$refs.modalinput.child.focus()
-            }
-        }
-    },
     props: {
         icon: {
             type: Object,
@@ -132,18 +123,8 @@ export default {
     methods: {
         changeFocus(bool){
             this.focused = bool
-        },
-
-        unfocusChild(){
-            const el = this.$refs['app-input']
-            const input = el.querySelector('input')
-            const select = el.querySelector('select')
-            let childElement = input;
-            if(select){
-                childElement = select
-            }
-            childElement.blur()
-        },
+           
+        }
     }
 }
 </script>

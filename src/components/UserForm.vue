@@ -136,7 +136,7 @@ import { minLength, maxLength } from '@vuelidate/validators'
 import { isZero } from '../services/customValidators'
 
 
-import { saveData, getData, getUnparcedData } from '../services/dbRequests/'
+import { getData, getUnparcedData } from '../services/dbRequests/'
 
 import { 
     CashOutline, 
@@ -315,7 +315,7 @@ export default {
                        meta:'👌',
                        duration: 5000
                     })
-                    this.formValues = await getData({target: 'user'})
+                    this.formValues = await getData({target: 'user', fromLocalStore: true})
                     this.sourceUserData = await getUnparcedData({target: 'user'})
                 } else {
                    this.notif.warning({
@@ -335,7 +335,7 @@ export default {
 
         async checkUserStatus(){
             if(this.$store.state.isRegistered) {
-                this.formValues = await getData({target: 'user'})
+                this.formValues = await getData({target: 'user', fromLocalStore: true})
                 this.sourceUserData = await getUnparcedData({target: 'user'})
                 if(this.$route.path === '/register'){
                     this.$router.push('/user-data')

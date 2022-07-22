@@ -23,28 +23,17 @@
         </div>
     </div>
     <div class="records-body">
-      <record-table
-        class="record-table"
-        title="Продажи:" 
-        :record="values.sales"
-        :total="totalSales"
-        :readonly="!isRedactible"
-      />
-      <record-table
-        class="record-table"
-        title="Доп. доход:" 
-        :record="values.income"
-        :total="totalIncome"
-        :readonly="!isRedactible"
-      />
-      <record-table
-        class="record-table"
-        title="Аванс:" 
-        :record="values.expense"
-        :total="totalExpense"
-        :isExpense="true"
-        :readonly="!isRedactible"
-      />
+      <div class="record-table" v-for="(item, key) in values" :key="key">
+        <record-table
+          :title="`${item.name}:`" 
+          :record="item.value"
+          :recordKey="key"
+          :total="computedTotal[key]"
+          :readonly="!isRedactible"
+          :isExpense="item.expense"
+          @on-report="saveChangedValues"
+        />
+      </div>
       <n-empty
         class="records-empty"
         v-if="valuesEmpty" 
@@ -101,8 +90,8 @@ import switchButton from '../components/btns/switchButton.vue'
 import { NEmpty } from 'naive-ui'
 
 import { core } from '../core'
-import { saveData, getData } from '../services/dbRequests'
-import { lastMonth } from '../services/helpers'
+import { getDbTotalCountWhereTargetEqualsOptions, getDbDataWhereOptionIsUqual, getData } from '../services/dbRequests'
+import { lastMonth, makeUniq, makeItemTitle } from '../services/helpers'
 import { useNotification } from 'naive-ui'
 import { SaveOutline, RefreshOutline } from '@vicons/ionicons5'
 
@@ -130,21 +119,37 @@ export default {
   data(){
     return {
       showConfirmModal: false,
-      archiveName: '',
       periodName: 'текущий',
       resetAndSaveData: true,
       resetAndRemoveData: false,
+      archiveName: '',
+      archiveCount: '',
       values: {
+        sales: {
+          name: 'Продажи',
+          value: []
+        },
+        income: {
+          name: 'Доход',
+          value: []
+        },
+        expense: {
+          name: 'Аванс',
+          value: [],
+          expense: true
+        },
+      },
+      changedValues: {
         sales: [],
         income: [],
-        expense: []
+        expense: [],
       },
-      sourceTotal: {}
+      stringfiedValues: ''
     }
   },
 
   watch: {
-      resetAndSaveData(val){
+    resetAndSaveData(val){
         if(val){
           this.resetAndRemoveData = false
           return
@@ -170,37 +175,37 @@ export default {
     },
 
     valuesEmpty(){
-      return this.values.sales.length <= 0 && this.values.expense.length <= 0 && this.values.income.length <= 0
+      return this.values.sales.value.length <= 0 && this.values.expense.value.length <= 0 && this.values.income.value.length <= 0
     },
 
     valuesUnchenged(){
-      return JSON.stringify(this.sourceTotal) === JSON.stringify(this.computedTotal)
+      return this.stringfiedValues === JSON.stringify(this.values)
     },
 
     totalSales(){
       return core.calcTotal({
-        array: this.values.sales,
+        array: this.values.sales.value,
         target: 'value'
       })
     },
 
     totalIncome(){
       return core.calcTotal({
-        array: this.values.income,
+        array: this.values.income.value,
         target: 'value'
       })
     },
 
     totalExpense(){
       return core.calcTotal({
-        array: this.values.expense,
+        array: this.values.expense.value,
         target: 'value'
       })
     },
 
     totalSalary(){
       const awardResult = core.getAwardIfPrecentFromPlanReached({
-        salesArray: this.$store.state.sales, 
+        salesArray: this.values.sales.value, 
         plan: this.$store.state.user.salesPlan,
         percentChangeRules: this.$store.state.user.percentChangeRules
       })
@@ -210,7 +215,7 @@ export default {
       }
       const salaryResult = core.calcTotalSalary({
         calcOptions: {
-          salesArray: this.$store.state.sales,
+          salesArray: this.values.sales.value,
           fixedPercenFromSales: this.$store.state.user.fixedPercenFromSales,
           fixedSalary: this.$store.state.user.fixedSalary,
           avans: 0,
@@ -227,11 +232,24 @@ export default {
         income: this.totalIncome,
         expense: this.totalExpense,
       }
-    }
-
+    },
   },
 
   methods: {
+    saveChangedValues(key, changedVal){
+      const values = JSON.parse(this.stringfiedValues)[key].value
+      .filter(item => item.no === changedVal.no)
+      .find(item => item.value !== changedVal.value)
+      if(values){
+        const newValue = this.values[key].value.find(item => item.no === values.no)
+        this.changedValues[key].push(newValue)
+        this.changedValues[key] = makeUniq(this.changedValues[key])
+      } else {
+        this.changedValues[key] = []
+      }
+    },
+
+  
     openResetWindowIfValuesNotEmpty(){
       if(!this.valuesEmpty){
         this.showConfirmModal = true
@@ -245,16 +263,13 @@ export default {
     },
 
     async saveDataToArchive(){
-      if(this.archiveName === ''){
-        this.archiveName = lastMonth()
-      }
-      const has = this.$store.state.archive.filter(item => item.name === this.archiveName)
+      this.archiveCount = await this.getArchiveNameCount(this.archiveName)
       const payload = {
+        no: this.archiveCount + 1,
         name: this.archiveName,
-        no: has.length + 1,
-        sales: this.$store.state.sales,
-        income: this.$store.state.income,
-        expense: this.$store.state.expense,
+        sales: this.values.sales.value,
+        income: this.values.income.value,
+        expense: this.values.expense.value,
         totalSalary: this.totalSalary,
         totalSales: this.totalSales
       }
@@ -269,41 +284,43 @@ export default {
         await this.saveDataToArchive()
       }    
       await Object.keys(this.values).forEach(key => {
-        this.values[key] = []
-        this.$store.commit('sync_new_values', {
-          value: this.values[key],
-          placement: key,
-          assign: true
-        })
-      })
-      getData({target: 'user'})
-        .then(data => {
-          this.$store.state.user = data
-          this.getValuesByRouteParams()
-          this.notif.success({
-            content: 'Данные сброшены',
-            meta:'👌',
-            duration: 5000
+        this.values[key].value.forEach(item => {
+          this.$store.commit('sync_new_values', {
+            value: item,
+            placement: key,
+            remove: true
           })
-          this.showConfirmModal = false
         })
+        this.values[key].value = []
+        this.stringfiedValues = JSON.stringify(this.values)
+      })
+      this.notif.success({
+        content: 'Данные сброшены',
+        meta:'👌',
+        duration: 5000
+      })
+      this.showConfirmModal = false
     },
 
     async updateData(){
       if(!this.valuesEmpty){
-        await Object.keys(this.values).forEach(key => {
-          this.$store.commit('sync_new_values', {
-            value: this.values[key],
-            placement: key,
-            assign: true
-          })
+        console.log(this.changedValues);
+        await Object.keys(this.changedValues).forEach(key => {
+          if(this.changedValues[key].length > 0){
+            this.changedValues[key].forEach(item => {
+              this.$store.commit('sync_new_values', {
+                value: item,
+                placement: key
+              })
+            })
+          }
         })
+        this.stringfiedValues = JSON.stringify(this.values)
         this.notif.success({
           content: 'Данные сохранены',
           meta:'👌',
           duration: 5000
         })
-        this.getValuesByRouteParams()
       } else {
         this.notif.warning({
           content: 'Нет данных',
@@ -313,33 +330,42 @@ export default {
       }
     },
 
+    async getArchiveNameCount(equals){
+      const count = await getDbTotalCountWhereTargetEqualsOptions({
+        target: 'archive', 
+        options: {
+          where: 'name',
+          equals: equals
+        }
+      })
+      return count
+    },
+
     async getValuesByRouteParams(){
       if(this.isRedactible){
         await Object.keys(this.values).forEach(key => {
           getData({target: key})
             .then(data => {
-              this.values[key] = data
-              this.sourceTotal[key] = core.calcTotal({
-                array: data,
-                target: 'value'
-              }) 
+              this.values[key].value = data
+              this.stringfiedValues = JSON.stringify(this.values)
             })
-        }) 
+        })
+        this.archiveName = lastMonth()
       } else {
         const archivePeriod = this.$route.params.period.split('&')
-        this.periodName = `${archivePeriod[0]}[${archivePeriod[1]}]`
-        const archiveDataByPeriod = this.$store.state.archive
-        .filter(item => item.name === archivePeriod[0])
-        .filter(item => item.no === Number(archivePeriod[1]))
+        this.periodName = makeItemTitle(archivePeriod[0], archivePeriod[1])
+        const archive = await getDbDataWhereOptionIsUqual({
+          target: 'archive', 
+          where: {name: archivePeriod[0], no: Number(archivePeriod[1])},
+        })
         Object.keys(this.values).forEach(key => {
-          this.values[key] = archiveDataByPeriod[0][key]
+          this.values[key].value = archive[key]
         })
       }
-    }
+    },
   },
 
   beforeMount(){
-    this.archiveName = lastMonth()
     this.getValuesByRouteParams()
   }
 }

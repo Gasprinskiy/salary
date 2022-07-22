@@ -12,6 +12,7 @@
                 v-money="config"
                 :value="value"
                 @input="bringValueToNumAndEmitUpdate"
+                @blur="emitItemChange"
                 v-if="!unmasked"
                 :style="computedStyle"
             >
@@ -60,7 +61,14 @@ export default {
         bringValueToNumAndEmitUpdate(e){
             const value = Number(e.target.value.replace(/\s/g, ''))
             this.$emit('update:value', value)
+            // this.emitItemChange()
         },
+
+        emitItemChange(){
+            if(this.itemId > 0){
+                this.$emit('report-change')
+            }
+        }
     },
 
 }

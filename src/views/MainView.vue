@@ -3,8 +3,8 @@
     <user-greeting class="page-top-greeting" :name="userData.name"/>
     <total-salary-animation
       title="Общая зарплата"
-      :totalValue="progress.total"
-      :expense="progress.avans"
+      :totalValue="totalSalary"
+      :expense="totalAvans"
       :active="true"
     />
   </div>
@@ -12,25 +12,25 @@
     <div class="body-top-progress">
       <progress-animation
         title="План выполнен на:"
-        :progress="progress.plan"
+        :progress="totalPlanProgress"
         :active="true"
         :isPercent="true"
         :precision="1"
       />
       <progress-animation
         title="Процент от продаж:"
-        :progress="progress.percentFromSales"
+        :progress="totalPercentFromSales"
         :active="true"
       />
       <progress-animation
         title="Дополнительный доход:"
-        :progress="progress.income"
+        :progress="totalIncome"
         :active="true"
       />
     </div>
     <div class="rules-progress" v-if="userData.isPercentFloats">
       <rules-progress-table
-        :rules="userData.percentChangeRules"
+        :rules="percentChangeRules"
       />
     </div>
     <div class="sales-table">
@@ -42,7 +42,7 @@
     </div>
     
     <n-empty
-      v-if="$store.state.sales.length <= 0" 
+      v-if="noSales" 
       description="Данные о продажах не найдены"
     />
   </div>
@@ -50,8 +50,8 @@
 
 <script>
 
-import { separateArray } from '../services/helpers'
-import {getData} from '../services/dbRequests'
+// import { separateArray } from '../services/helpers'
+import { getData, getReverceData } from '../services/dbRequests'
 import { core } from '../core'
 import totalSalaryAnimation from '../components/calc-results/totalValueAnimation.vue'
 import progressAnimation from '../components/calc-results/progressAnimation.vue'
@@ -74,115 +74,131 @@ export default {
 
   data(){
     return {
-      progress: {
-        total: 0,
-        plan: 0,
-        totalSales: 0,
-        avans: 0, 
-        income: 0
-      },
       userData: {},
+      calculationsData: {
+        sales: [],
+        expense: [],
+        income: []
+      },
       recentSales: [],
-      sales: [],
     }
   },
 
-  methods: {
-    markDonePercentChangeRules(reachedRules){
-      reachedRules.forEach(reachedRule => {
-        const index = this.userData.percentChangeRules.findIndex(rule => rule.id === reachedRule.id)
-        this.userData.percentChangeRules[index].isDone = true
-      });
-    },
-
-    applyPercentChangeOptions(){
-      const result = core.getAwardIfPrecentFromPlanReached({
-        salesArray: this.$store.state.sales, 
-        plan: this.userData.salesPlan,
-        percentChangeRules: this.userData.percentChangeRules
-      })
-      if(!result.empty){
-        this.userData.fixedPercenFromSales = result.reachedPercent
-        this.progress.total += result.award
-        this.markDonePercentChangeRules(result.sourceRules)
-      }
-    },
-
-    async getLocalUserData(){
-      this.userData = await getData({target: 'user'})
-    },
-
-    getPlanProgress(){
-      this.progress.plan = core.calcReachedPercentFromPlan({
-        salesArray: this.$store.state.sales,
-        plan: this.userData.salesPlan
-      })
-    },
-
-    getAvans(){
-      if(this.$store.state.expense){
-        this.progress.avans = core.calcTotal({
-          array: this.$store.state.expense,
-          target: 'value'
-        })
-      }
-    },
-
-    getRecentSales(){
-      this.recentSales = separateArray({
-          sourceArray: this.$store.state.sales,
-          reverse: true,
-          options: {
-            limit: 6,
-            page: 1
-          }
-        })
-    },
-
-    applyPercenFloatOptions(){
+  computed: {
+    percentChangeProgress(){
       if(this.userData.isPercentFloats){
-        this.applyPercentChangeOptions()
-        this.getPlanProgress()
+        return core.getAwardIfPrecentFromPlanReached({
+          salesArray: this.calculationsData.sales, 
+          plan: this.userData.salesPlan,
+          percentChangeRules: this.userData.percentChangeRules
+        })
       }
     },
 
-    calcIncome(){
-      this.progress.income = core.calcTotal({
-        array: this.$store.state.income,
-        target: 'value'
-      })
+    totalAvans(){
+      return this.calcTotalIfArrayHasData(this.calculationsData.expense)
     },
 
-    calcTotalSalaryProgress(){
-      const totalResult = core.calcTotalSalary({
+    totalIncome(){
+      return this.calcTotalIfArrayHasData(this.calculationsData.income)
+    },
+
+    totalSalaryProgress(){
+      return core.calcTotalSalary({
         calcOptions: {
-          salesArray: this.$store.state.sales,
-          fixedPercenFromSales: this.userData.fixedPercenFromSales,
+          salesArray: this.calculationsData.sales,
+          fixedPercenFromSales: this.reachedPercent,
           fixedSalary: this.userData.fixedSalary,
-          avans: this.progress.avans,
+          avans: this.totalAvans,
           plan: this.userData.salesPlan, 
         },
         ignorePlan: this.userData.ignorePercentFromPlan
       })
-      this.progress.total += totalResult.total
-      this.progress.percentFromSales = totalResult.percentFromSales
     },
 
-    async makeAllCalculationsWithUserOptions(){
-      await this.getLocalUserData()
-      await this.applyPercenFloatOptions()
-      await this.getAvans()
-      await this.calcTotalSalaryProgress()
+    totalSalary(){
+      if(this.percentChangeProgress && !this.percentChangeProgress.empty){
+        return this.totalSalaryProgress.total + this.percentChangeProgress.award
+      }
+      return this.totalSalaryProgress.total
     },
 
+    totalPercentFromSales(){
+      return this.totalSalaryProgress.percentFromSales
+    },
+
+    totalPlanProgress(){
+      return core.calcReachedPercentFromPlan({
+        salesArray: this.calculationsData.sales,
+        plan: this.userData.salesPlan
+      })
+    },
+
+    percentChangeRules(){
+      return this.markDonePercentChangeRules()
+    },
+
+    reachedPercent(){
+      if(this.percentChangeProgress){
+        return this.percentChangeProgress.reachedPercent
+      }
+      return this.userData.fixedPercenFromSales
+    },
+
+    noSales(){
+      return this.calculationsData.sales.length <= 0
+    }
+  },
+
+  methods: {
+    markDonePercentChangeRules(){
+      const rules = this.userData.percentChangeRules
+      if(this.percentChangeProgress && !this.percentChangeProgress.empty){
+        this.percentChangeProgress.sourceRules.forEach(reachedRule => {
+          const index = rules.findIndex(rule => rule.id === reachedRule.id)
+          rules[index].isDone = true
+        });
+      }
+      return rules
+    },
+
+    calcTotalIfArrayHasData(array){
+      if(array.length > 0){
+        return core.calcTotal({
+          array: array,
+          target: 'value'
+        })
+      }
+      return 0
+    },
+
+    async getRecentSales(){
+      await getReverceData({
+        target: 'sales',
+        limit: 8
+      }).then(data =>{ 
+        this.recentSales = data
+      })
+    },
+
+    async getLocalUserData(){
+      this.userData = await getData({
+        target: 'user',
+        fromLocalStore: true
+      })
+    },
+
+    async getCalculationData(){
+      await Object.keys(this.calculationsData).forEach(key => {
+        getData({target: key}).then(data => this.calculationsData[key] = data)
+      })
+    }
   },
 
   beforeMount(){
-    this.makeAllCalculationsWithUserOptions()
-      .then(()=>{
-        this.getRecentSales()
-        this.calcIncome()
-      })
+    this.getCalculationData()
+    this.getLocalUserData()
+    this.getRecentSales()
   }
 }
 </script>

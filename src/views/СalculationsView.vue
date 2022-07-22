@@ -36,8 +36,8 @@ import moneyInput from '../components/inputs/moneyInput.vue'
 
 import useVuelidate from '@vuelidate/core'
 import { isZero } from '../services/customValidators'
+import { getDbTotalCount } from '../services/dbRequests/'
 import { useNotification } from 'naive-ui'
-import { saveData } from '../services/dbRequests'
 import { formatNumber } from '../services/helpers'
 import { AddOutline, RemoveOutline, RefreshOutline, 
 ListCircle} from '@vicons/ionicons5'
@@ -65,6 +65,11 @@ export default {
     data(){
         return {
             calculationsValue: 0,
+            dataCount: {
+                sales: 0,
+                income: 0,
+                expense: 0
+            },
             operations: [
                 {label: 'Продажа', operation: 'sales', icon: 'AddOutline'},
                 {label: 'Доход', operation: 'income', icon: 'AddOutline'},
@@ -86,9 +91,17 @@ export default {
     },
 
     methods: {
+        async getDataCount(){
+            await Object.keys(this.dataCount).forEach(key => {
+                getDbTotalCount({target: key}).then(data => this.dataCount[key] = data)
+                
+            })
+        },
+
         async add(target){
+            this.dataCount[target] += 1
             const payload = {
-                no: this.$store.state[target].length + 1,
+                no: this.dataCount[target],
                 value: this.calculationsValue
             }
             await this.$store.commit('sync_new_values', {
@@ -118,6 +131,10 @@ export default {
               await this.add(target)
             }  
         },
+    },
+
+    beforeMount(){
+        this.getDataCount()
     },
 
 }

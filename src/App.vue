@@ -80,6 +80,7 @@ export default {
   methods: {
     async showUserRouteByDefinedStatus(){
       await this.$store.commit('check_user_status')
+      console.log(this.$store.state.isRegistered);
       if(this.$store.state.isRegistered){
         await this.$store.commit('get_user_data')
         this.$router.push('/main')

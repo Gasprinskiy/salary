@@ -35,7 +35,9 @@
                     <td class="sales-td-value" :class="{'read-only': readonly}">
                         <money-input
                             class="table-value"
+                            @report-change="emitChangeReport(item)"
                             v-model:value="item.value"
+                            :itemId="item.no"
                             align="center"
                             :flat="true"
                         />
@@ -73,6 +75,10 @@ export default {
             type: Array,
             defalult: []
         },
+        recordKey: {
+            type: String,
+            default: ''
+        },
         total: {
             type: Number,
             default: 0
@@ -92,11 +98,8 @@ export default {
     },
 
     methods: {
-        updateValue(e){
-            const dataNo = Number(e.target.dataset.no)
-            const uIndex = this.record.findIndex(item => item.no === dataNo)
-            this.record[uIndex].value = Number(e.target.value.replace(/\s/g, ''))
-            this.$emit('update:record', this.sales)
+        emitChangeReport(item){
+            this.$emit('on-report', this.recordKey, item)
         }
     },
 }
@@ -124,5 +127,12 @@ export default {
     }
     .read-only {
         pointer-events: none;
+    }
+
+    .table-value-hidden {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
     }
 </style>

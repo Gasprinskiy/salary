@@ -23,7 +23,12 @@ export default {
             type: String,
             default: ''
         },
-        value: [String, Number]
+        value: [String, Number],
+        itemId: {
+            type: Number,
+            required: false,
+            default: 0
+        }
     },
 
     computed: {

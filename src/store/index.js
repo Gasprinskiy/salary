@@ -1,14 +1,11 @@
 import { createStore } from 'vuex'
-import { saveData, getData, dbHasData, testPut, getDataByDb } from '../services/dbRequests/'
+import { toRaw } from 'vue'
+import { saveData, getData, dbHasData, removeData } from '../services/dbRequests/'
 
 export default createStore({
     state () {
       return {
         user: {},
-        sales: [],
-        expense: [],
-        income: [],
-        archive: [],
         isRegistered: false
       }
     },
@@ -20,31 +17,33 @@ export default createStore({
 
       async sync_user_data (state, userData) {
         state.user = userData;
-        await testPut({
+        await saveData({
           target: 'user',
-          payload: userData
+          payload: toRaw(userData),
+          toLocalStore: true
         })
-        console.log(getDataByDb({target: 'user'}));
       },
 
-      async sync_new_values(state, {value, placement, assign = false}){
-        if(assign){
-          state[placement] = value
+      async sync_new_values(state, {value, placement, remove = false}){
+        if(!remove){
+          let toRowPayload = {}
+          Object.keys(value).forEach(key =>{
+            toRowPayload[key] = toRaw(value[key])
+          })
+          await saveData({
+            target: placement,
+            payload: toRowPayload
+          })
         } else {
-          state[placement].push(value)
+          await removeData({
+            target: placement,
+            id: value.id
+          })
         }
-        await saveData({
-          target: placement,
-          payload: state[placement]
-        })
       },
 
       async get_user_data (state) {
-        state.user = await getData({target: 'user'})
-        state.expense = await getData({target: 'expense'})
-        state.sales = await getData({target: 'sales'})
-        state.income = await getData({target: 'income'})
-        state.archive = await getData({target: 'archive'})
+        state.user = await getData({target: 'user', fromLocalStore: true})
       },
     }
 })    
