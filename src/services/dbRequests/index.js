@@ -36,11 +36,16 @@ export const getDataById = async ({target, id}) => {
 }
 
 export const getReverceData = async ({target, limit, offset = 0}) => {
+    return await db[target].reverse().toArray()
+    
+}
+
+export const getReverceWithLimitData = async ({target, limit, offset = 0}) => {
     return await db[target]
-                .reverse()
-                .limit(limit)
-                .offset(offset)
-                .toArray()
+        .reverse()
+        .limit(limit)
+        .offset(offset)
+        .toArray()
     
 }
 

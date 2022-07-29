@@ -112,7 +112,7 @@ import { NEmpty, NIcon } from 'naive-ui'
 
 import { core } from '../core'
 import { makeItemTitle } from '../services/helpers'
-import { getData } from '../services/dbRequests'
+import { getReverceData } from '../services/dbRequests'
 import { useNotification } from 'naive-ui'
 import { SaveOutline, AnalyticsOutline, InformationCircleOutline } from '@vicons/ionicons5'
 
@@ -189,7 +189,7 @@ export default {
 
   methods: {
     async getSeparatedArchive(){
-      this.archive = await getData({target: 'archive'})
+      this.archive = await getReverceData({target: 'archive'})
     },
 
     removeItem(item){

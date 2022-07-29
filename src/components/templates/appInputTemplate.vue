@@ -58,6 +58,7 @@
 import { NIcon } from 'naive-ui'
 import { useQuasar } from 'quasar'
 import modalWindowTemplate from './modalWindowTemplate.vue'
+import { ArrowDropDownRound } from '@vicons/material'
 
 export default {
     components: { modalWindowTemplate , NIcon },
@@ -85,25 +86,36 @@ export default {
         },
         flat: {
             type: Boolean,
-            default: false,
+            default: false
         },
         hasError: {
             type: Boolean,
-            default: false,
+            default: false
+        },
+        isSelectFocused: {
+            type: Boolean,
+            default: false
         }
     },
 
     directives: {
         'chind-focused': {
             mounted: (el, binding) => {
-                const input = el.querySelector('input')
-                const select = el.querySelector('select')
-                let childElement = input;
-                if(select){
-                    childElement = select
+                const childElement = el.querySelector('input')
+                const selectGroup = el.querySelector('#select-option')
+                if(!selectGroup){
+                    childElement.addEventListener('focus', ()=> binding.value(true))
+                    childElement.addEventListener('blur', ()=> binding.value(false))
+                } else {
+                    document.addEventListener('click', (e) => {
+                        if(e.target === childElement) {
+                            return binding.value(true)
+                        } else if(e.target === selectGroup){
+                            return binding.value(false)
+                        }
+                        binding.value(false)
+                    })
                 }
-                childElement.addEventListener('focus', ()=> binding.value(true))
-                childElement.addEventListener('blur', ()=> binding.value(false))
             }
         },
     },
@@ -122,8 +134,12 @@ export default {
 
     methods: {
         changeFocus(bool){
-            this.focused = bool
-           
+           this.focused = bool
+           this.changeSelectFocus(bool)
+        },
+
+        changeSelectFocus(bool){
+            this.$emit('update:isSelectFocused', bool)
         }
     }
 }
@@ -131,9 +147,12 @@ export default {
 
 <style scoped lang="scss">
 
+@import '../../styles/variables.scss';
+
 .app-input {
     width: 100%;
     height: 34px;
+    
     position: relative;
     display: flex;
     align-items: center;
@@ -151,6 +170,9 @@ export default {
     .app-input-label {
         position: absolute;
         top: -12px;
+        display: block;
+        background-color: #fff;
+       
     }
     .app-input-wrapper {
         width: 100%;

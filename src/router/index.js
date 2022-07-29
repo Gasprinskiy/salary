@@ -7,6 +7,7 @@ import RecordView from '../views/RecordView.vue'
 import UserDataView from '../views/UserDataView.vue'
 import CalculationsView from '../views/СalculationsView.vue'
 import ArchiveView from '../views/ArchiveView.vue'
+import ExchengeRatesView from '../views/ExchengeRatesView.vue'
 
 const routes = [
     {
@@ -59,6 +60,13 @@ const routes = [
         component: ArchiveView,
         meta: {
             index: 6
+        }
+    },
+    {
+        path: '/exchenge-rates/:query',
+        component: ExchengeRatesView,
+        meta: {
+            index: 7
         }
     },
 ]

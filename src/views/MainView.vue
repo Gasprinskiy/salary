@@ -1,8 +1,16 @@
 <template>
   <div class="main-page-top page-top">
     <user-greeting class="page-top-greeting" :name="userData.name"/>
+    <app-button
+      class="exchange-route-button"
+      :rounded="true"
+      :flat="true"
+      :icon="icons.CurrencyExchangeSharp"
+      fontSize="28px"
+      @click="$router.push(`/exchenge-rates/${salaryResultForExchangeRoute}`)"
+    />
     <total-salary-animation
-      title="Общая зарплата"
+      title="Итоговая зарплата"
       :totalValue="totalSalary"
       :expense="totalAvans"
       :active="true"
@@ -51,7 +59,7 @@
 <script>
 
 // import { separateArray } from '../services/helpers'
-import { getData, getReverceData } from '../services/dbRequests'
+import { getData, getReverceWithLimitData } from '../services/dbRequests'
 import { core } from '../core'
 import totalSalaryAnimation from '../components/calc-results/totalValueAnimation.vue'
 import progressAnimation from '../components/calc-results/progressAnimation.vue'
@@ -60,6 +68,11 @@ import rulesProgressTable from '../components/calc-results/rulesProgressTable.vu
 import recentSalesTable from '../components/calc-results/recordsTabel.vue'
 import appButton from '../components/btns/appButton.vue'
 import { NEmpty } from 'naive-ui'
+import { CurrencyExchangeSharp } from '@vicons/material'
+
+const icons = {
+  CurrencyExchangeSharp
+}
 
 export default {
   components: {
@@ -69,7 +82,14 @@ export default {
     rulesProgressTable,
     recentSalesTable,
     appButton,
+    icons,
     NEmpty
+  },
+
+  setup(){
+    return {
+      icons
+    }
   },
 
   data(){
@@ -147,7 +167,14 @@ export default {
 
     noSales(){
       return this.calculationsData.sales.length <= 0
-    }
+    },
+
+    salaryResultForExchangeRoute(){
+      if(this.totalAvans > 0){
+        return `${this.totalSalary}&${this.totalSalary + this.totalAvans}`
+      }
+      return this.totalSalary
+    },
   },
 
   methods: {
@@ -173,7 +200,7 @@ export default {
     },
 
     async getRecentSales(){
-      await getReverceData({
+      await getReverceWithLimitData({
         target: 'sales',
         limit: 8
       }).then(data =>{ 
@@ -217,6 +244,14 @@ export default {
       position: absolute;
       left: 12px;
       top: 12px;
+    }
+    .exchange-route-button {
+      color: $backgroung;
+      position: absolute;
+      right: 12px;
+      top: 11px;
+      font-weight: 500;
+        // opacity: 0;
     }
   }
 

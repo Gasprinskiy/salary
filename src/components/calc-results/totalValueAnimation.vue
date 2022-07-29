@@ -4,14 +4,17 @@
             {{title}}
         </div>
         <div class="total-salary-value salary-value title" :style="{color: valueColor}">
-            <n-number-animation
+            <div class="salary-value-main" :class="{'align-center': totalValue <= 0}">
+              <n-number-animation
                 :from="0"
                 :to="totalValue"
                 :active="active"
                 :precision="0"
                 :duration="1000"
                 show-separator
-            />
+              />  
+            </div>
+            
             <div class="salary-value-avans avans" v-if="expense">
                 <span class="avans-perfix">-</span>
                 <n-number-animation
@@ -61,6 +64,9 @@ export default {
 <style lang="scss" scoped>
     .total-salary-wrapper  {
         text-align: left;
+        .align-center {
+            text-align: center;
+        }
     }
     .total-salary-value {
         font-size: 38px;

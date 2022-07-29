@@ -23,6 +23,14 @@
         </div>
     </div>
     <div class="records-body">
+      <div class="body-total-salary" v-if="!valuesEmpty">
+        <total-salary-animation
+          title="Общая зарплата"
+          :totalValue="totalSalary"
+          :active="true"
+        />
+      </div>
+      
       <div class="record-table" v-for="(item, key) in values" :key="key">
         <record-table
           :title="`${item.name}:`" 
@@ -87,6 +95,7 @@ import appButton from '../components/btns/appButton.vue'
 import modalWindowTemplate from '../components/templates/modalWindowTemplate.vue'
 import textInput from '../components/inputs/textInput.vue'
 import switchButton from '../components/btns/switchButton.vue'
+import totalSalaryAnimation from '../components/calc-results/totalValueAnimation.vue'
 import { NEmpty } from 'naive-ui'
 
 import { core } from '../core'
@@ -107,6 +116,7 @@ export default {
     textInput, 
     switchButton, 
     modalWindowTemplate,
+    totalSalaryAnimation,
     NEmpty,
     icons  
   },
@@ -209,21 +219,26 @@ export default {
         plan: this.$store.state.user.salesPlan,
         percentChangeRules: this.$store.state.user.percentChangeRules
       })
-      let award = 0;
+      let reached = {
+        award: 0,
+        percent: this.$store.state.user.fixedPercenFromSales
+      }
       if(!awardResult.empty) {
-        award += awardResult.award
+        console.log(awardResult);
+        reached.award = awardResult.award;
+        reached.percent = awardResult.reachedPercent
       }
       const salaryResult = core.calcTotalSalary({
         calcOptions: {
           salesArray: this.values.sales.value,
-          fixedPercenFromSales: this.$store.state.user.fixedPercenFromSales,
+          fixedPercenFromSales: reached.percent,
           fixedSalary: this.$store.state.user.fixedSalary,
           avans: 0,
           plan: this.$store.state.user.salesPlan, 
         },
         ignorePlan: this.$store.state.user.ignorePercentFromPlan
       })
-      return award + salaryResult.total + this.totalExpense
+      return reached.award + salaryResult.total 
     },
 
     computedTotal(){
@@ -390,6 +405,11 @@ export default {
       .records-button {
         margin: 0px 0px 0px 5px;
       }
+    }
+    .body-total-salary {
+      display: flex;
+      justify-content: center;
+      padding: 5px;
     }
     .record-table {
       margin: 15px 0;

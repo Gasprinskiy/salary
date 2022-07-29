@@ -1,6 +1,8 @@
 <template>
     <div class="modal-window-wrapper" @click="closeBlur"  :class="{show: show}">  
-        <div class="modal-window-container" @click.stop  :style="{maxWidth: maxWidth + 'px'}">
+        <div class="modal-window-container" 
+            :style="{'max-width': maxWidth, 'padding': padding}" 
+            @click.stop >
             <app-button 
                 v-if="xbtn" 
                 @click="closeModal" 
@@ -27,8 +29,12 @@ export default {
     },
     props: {
         maxWidth: {
-            type: Number,
-            default: 400
+            type: String,
+            default: '400px'
+        },
+        padding: {
+            type: String,
+            default: '20px'
         },
         closeOnBlur: {
             type: Boolean,
@@ -71,8 +77,10 @@ export default {
             background-color: $backgroung;
             margin: auto;
             position: relative;
-            padding: 20px;
             border-radius: 3px;
+            &.padding-zero {
+                padding: 0;
+            }
             .modal-window-close-btn {
                 position: absolute;
                 right: 0;

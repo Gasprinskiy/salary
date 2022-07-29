@@ -10,6 +10,7 @@
     />
     
     <q-scroll-area  :style="areaHeight">
+      <n-loading-bar-provider>
         <router-view v-slot="{ Component }">
           <transition :name="transitionName">
             <div class="component-wrapper" :class="{desktop: !isMobile, 'hide-nav': hideNavBar}" :style="componentWrapperStyle" :key="$route.path">
@@ -17,24 +18,24 @@
             </div>
           </transition>
         </router-view>
+      </n-loading-bar-provider>
     </q-scroll-area>
     
   </div>
 </n-notification-provider> 
-  
+
 </template>
 
 <script>
 
 import 'vfonts/Inter.css'
-import  { dbHasData , getData } from './services/dbRequests/'
 import { useQuasar } from 'quasar'
 import desctopNavBar from './components/bars/desctopNavBar.vue'
 import mobileNavBar from './components/bars/mobileNavBar.vue'
-import { NNotificationProvider } from 'naive-ui'
+import { NNotificationProvider, NLoadingBarProvider } from 'naive-ui'
 
 export default {
-  components: {desctopNavBar, mobileNavBar, NNotificationProvider},
+  components: {desctopNavBar, mobileNavBar, NNotificationProvider, NLoadingBarProvider},
   setup(){
     const $q = useQuasar()
     return {
@@ -80,7 +81,6 @@ export default {
   methods: {
     async showUserRouteByDefinedStatus(){
       await this.$store.commit('check_user_status')
-      console.log(this.$store.state.isRegistered);
       if(this.$store.state.isRegistered){
         await this.$store.commit('get_user_data')
         this.$router.push('/main')

@@ -15,11 +15,7 @@ app.directive(VMoney)
 
 app
 .use(router)
-.use(Quasar, {
-    plugins: {
-        Notify
-    }
-})
+.use(Quasar)
 .use(money)
 .use(Vue3TouchEvents)
 .use(store)
