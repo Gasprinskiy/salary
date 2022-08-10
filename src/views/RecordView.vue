@@ -223,7 +223,7 @@ export default {
         award: 0,
         percent: this.$store.state.user.fixedPercenFromSales
       }
-      if(!awardResult.empty) {
+      if(awardResult.empty) {
         console.log(awardResult);
         reached.award = awardResult.award;
         reached.percent = awardResult.reachedPercent
